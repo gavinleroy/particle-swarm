@@ -7,7 +7,11 @@
 #include "pso.h"
 #include "logging.h"
 
-double my_f(double const * const x)
+#include "timing.h"
+
+#define PROFILING
+
+double my_f(double const * const x, size_t d)
 {
     return (x[0] - 2) * (x[0] - 2) + (x[1] - 5) * (x[1] - 5);
 }
@@ -20,15 +24,13 @@ int main(int argc, char **argv)
         set_logging_directory(argv[1]);
     }
 
-    srand(clock());
+#ifdef PROFILING
+    printf("Started profiling\n");
+    double cycles = perf_counter(run_pso_f);
+    printf("Number of cycles required for run_pso: %lf\n", cycles);
+#else 
 
-    int n_points = 1;
-    double U[] = {
-        10., 20.
-    };
-    double lambda[] = {
-        3.
-    };
+    srand(clock());
 
     double inertia = 0.7;
     double social = 1., cognition = 1.;
@@ -60,6 +62,8 @@ int main(int argc, char **argv)
     );
 
     //getchar();
+
+#endif
 
 
 }

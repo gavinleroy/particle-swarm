@@ -1,6 +1,8 @@
 #pragma once
 
-typedef double (*blackbox_fun)(double const * const);
+#include <stdlib.h>
+
+typedef double (*blackbox_fun)(double const * const, size_t d);
 
 void run_pso(
     blackbox_fun f,

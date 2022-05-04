@@ -477,7 +477,7 @@ void pso_constant_inertia_first_steps(struct pso_data_constant_inertia * pso)
             pso->y[i][k] = pso->x[0][i][k];
         }
 
-        double x_eval = pso->f(pso->x[0][i]);
+        double x_eval = pso->f(pso->x[0][i], pso->dimensions);
         pso->y_eval[i] = x_eval;
         pso->x_eval[0][i] = x_eval;
 
@@ -619,7 +619,7 @@ bool pso_constant_inertia_loop(struct pso_data_constant_inertia * pso)
     // Evaluate swarm positions
     for (int i = 0 ; i < pso->population_size ; i++)
     {
-        pso->x_eval[t+1][i] = pso->f(pso->x[t+1][i]);
+        pso->x_eval[t+1][i] = pso->f(pso->x[t+1][i], pso->dimensions);
     }
 
     // Step 8. Update the best positions per particle and overall
@@ -679,7 +679,7 @@ bool pso_constant_inertia_loop(struct pso_data_constant_inertia * pso)
     // Determine if minimizer of surrogate is far from previous points
     if(is_far_from_previous_evaluations(pso, x_local))
     {
-        double x_local_eval = pso->f(x_local);
+        double x_local_eval = pso->f(x_local, pso->dimensions);
 
         pso->past_refinement_points[pso->n_past_refinement_points] = x_local;
         pso->past_refinement_points_eval[pso->n_past_refinement_points] = x_local_eval;
