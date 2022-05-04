@@ -1,0 +1,67 @@
+count the number of flops of
+- local_refinement
+- plu_factorization
+- each step of the algorithm (12 in total)
+- the whole agorithm (by adding up each step
+  as a function of:
+   - dimensions
+   - population_size
+   - time_max
+   - n_trials
+
+
+
+1. main
+2. perf_counter
+   1. generate_run_pso_parameters
+      1. count fill_linspace?
+   2. run_pso
+      1. pso_constant_inertia_init: 0 flops
+      2. pso_constant_inertia_first_steps: pop_size*dim*(rand_between + 3) flops
+         1. Step 1 & 2: 0 flops
+         2. Step 3: pop_size*dim*(rand_between + 3) flops
+         3. Step 4: 0 flops
+      3. pso_constant_inertia_loop
+         1. Step 5: fit_surrogate: 
+         2. Step 6: 
+            1. pop_size*(
+               1. n_trails * dim * 12
+               2. \+ n_trails * surrogate_eval
+               3. )
+            2. surrogate_eval:
+               1. (time+1)*pop_size*(3*dim +4) + 2*dim + 1
+         3. Step 7:
+            1. pop_size * flops_of_f_blackbox
+         4. Step 8: 0 flops
+         5. Step 9:
+            1. fit_surrogate
+         6. Step 10: local_optimization
+            1. dim/2 + dim/2 
+            2. 10*dim*5
+            3. 10*flops_local_optimization_function
+               1. surrogate_eval
+         7. Step 11: 
+            1. is_far_from_previous_evaluations: 
+               1. (time+1)*pop_size*dist2
+               2. n_past_refinement_points*dist2
+
+
+functions:
+dist2:            3*dim
+dist:             dist2 + 1
+surrogate_eval:   (time+1)*pop_size*(dist + 3) + 2*dim + 1
+rand_between:     4
+fit_surrogate:
+   1. Building Phi Matrix: (pop_size * (time+1))^2 * dist flops
+   2. Building P & P^T: 0 flops 
+   3. Building 0-Matrices: 0 flops 
+   4. alloc_plu_factorization: 0 flops 
+   5. N = pop_size*(time+1) + (dim+1)
+      1. plu_factorize 
+      2. plu_solve 
+      3. forward substitution: N^2 * (mult + sub) + N div 
+      4. backward substitution: N^2 * (mult + sub) + N div
+
+alloc_plu_factorization: 0 flops 
+plu_factorize:    2*N^2 + N flops
+plu_solve:        4*N^2 + 2N flops 
