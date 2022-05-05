@@ -22,7 +22,7 @@ void fill_linspace(double * const array, size_t dim, double start, double end) {
 double f1(double const * const x, size_t d)
 {
     double acc=0;
-    for(size_t it=0; it<d; ++d) {
+    for(size_t it=0; it<d; ++it) {
         acc += pow(x[it]-2, 2);
     }
     return acc;
@@ -31,7 +31,7 @@ double f1(double const * const x, size_t d)
 // x_1^3 + ... + x_(d-1)^3 + 3(x_2 + ... + x_d) + 3
 double f2(double const * const x, size_t d) {
     double acc=0;
-    for(size_t it=0; it<d-1; ++d) {
+    for(size_t it=0; it<d-1; ++it) {
         acc += pow(x[it], 3) + 3*x[it+1] + 3;
     }
     return acc;
@@ -40,7 +40,7 @@ double f2(double const * const x, size_t d) {
 // x_1^2 * x_2 + ... x_(d-1)^2 * x_d + x_d^2
 double f3(double const * const x, size_t d) {
     double acc=0;
-    for(size_t it=0; it<d-1; ++d) {
+    for(size_t it=0; it<d-1; ++it) {
         acc += pow(x[it],2) * x[it+1];
     }
     acc += pow(x[d-1], 2);

@@ -15,7 +15,7 @@
 double perf_counter(enum profiled_function_t profiled_function) {
     printf("Starting perf_counter\n");
     double cycles = 0.;
-    long num_runs = 1;
+    long num_runs = 10;
     double multiplier = 1;
     myInt64 start, end;
 
@@ -52,14 +52,11 @@ double perf_counter(enum profiled_function_t profiled_function) {
             default:
                 break;
             }
-            printf("?\n");
         }
         end = stop_tsc(start);
 
         cycles = (double)end;
-        printf("cycles: %lf\n", cycles);
         multiplier = (CYCLES_REQUIRED) / (cycles);
-        printf("multiplier: %lf\n", multiplier);
         
     } while (multiplier > 2);
 
@@ -68,7 +65,7 @@ double perf_counter(enum profiled_function_t profiled_function) {
     // The following allows us to find the average number of cycles.
     double total_cycles = 0;
     for (size_t j = 0; j < REP; j++) {
-        printf("Measurement rep number %d\n", REP);
+        printf("Measurement rep number %d\n", j);
 
         start = start_tsc();
         for (size_t i = 0; i < num_runs; ++i) {

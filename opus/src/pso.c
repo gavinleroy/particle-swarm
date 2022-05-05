@@ -14,7 +14,7 @@
 #define DEBUG_TRIALS 0
 #define DEBUG_SURROGATE 0
 
-
+// #define DEBUG_STDOUT
 
 #define LOG_SURROGATE 1
 
@@ -482,7 +482,9 @@ void pso_constant_inertia_first_steps(struct pso_data_constant_inertia * pso)
         pso->x_eval[0][i] = x_eval;
 
     }
-
+    #ifdef DEBUG_STDOUT
+        printf("before: find y\n");
+    #endif
     // find ŷ
     
     double * y_hat = pso->y[0];
@@ -564,7 +566,9 @@ bool pso_constant_inertia_loop(struct pso_data_constant_inertia * pso)
             char trial_name[16] = {0};
             snprintf(trial_name, sizeof(trial_name), "x%d_trial%d", i, l);
             print_vectord(x_trial, pso->dimensions, trial_name);
-            printf("score of trial %d = %f", l, x_trial_seval);
+            #ifdef DEBUG_STDOUT
+                printf("score of trial %d = %f", l, x_trial_seval);
+            #endif
             #endif
 
             if(x_trial_seval < x_trial_best_seval)
@@ -728,9 +732,9 @@ void run_pso(
         vmin, vmax,
         initial_positions
     );
-
     pso_constant_inertia_first_steps(&pso);
 
+    #ifdef DEBUG_STDOUT
     printf("t=%d  ŷ=[", pso.time);
     for (int j = 0 ; j < dimensions ; j++)
     {
@@ -738,12 +742,14 @@ void run_pso(
         if (j < dimensions - 1) printf(", ");
     }
     printf("]  f(ŷ)=%f\n", pso.y_hat_eval);
+    #endif
 
 
     while(pso.time < pso.time_max - 1)
     {
         pso_constant_inertia_loop(&pso);
 
+        #ifdef DEBUG_STDOUT
         printf("t=%d  ŷ=[", pso.time);
         for (int j = 0 ; j < dimensions ; j++)
         {
@@ -751,5 +757,6 @@ void run_pso(
             if (j < dimensions - 1) printf(", ");
         }
         printf("]  f(ŷ)=%f\n", pso.y_hat_eval);
+        #endif
     }
 }
