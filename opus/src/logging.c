@@ -22,7 +22,7 @@ void set_logging_directory(char const * logdir)
 void log_surrogate(char const * fname,
     double * lambda,
     double * p,
-    double *** x,
+    double * x,
     size_t t,
     size_t dim,
     size_t popsize
@@ -54,18 +54,11 @@ void log_surrogate(char const * fname,
 
     size_t lambda_s = (t+1) * popsize;
     size_t p_s = dim + 1;
-    // #x = (t + 1) * popsize * d
+    size_t x_s = (t + 1) * popsize * dim;
 
     fwrite(lambda, lambda_s, sizeof(double), fp);
     fwrite(p, p_s, sizeof(double), fp);
-
-    for(size_t j = 0 ; j < t+1 ; j++)
-    {
-        for(size_t i = 0 ; i < popsize ; i++)
-        {
-            fwrite(x[j][i], dim, sizeof(double), fp);
-        }
-    }
+    fwrite(x, x_s, sizeof(double), fp);
 
     fclose(fp);
 }

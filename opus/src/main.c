@@ -51,6 +51,7 @@ int main(int argc, char **argv)
     //     printf("%d, %lf\n", hyperparams->plu_matrix_side_length, cycles);
     // }
 
+<<<<<<< HEAD
     // printf("Started profiling plu_solve\n");
     // for(int N=10; N<=10000; N*=2) {
     //     hyperparams->plu_matrix_side_length = N;
@@ -75,6 +76,8 @@ int main(int argc, char **argv)
 
     srand(clock());
 
+=======
+>>>>>>> master
     double inertia = 0.7;
     double social = 1., cognition = 1.;
     double local_refinement_box_size = 3.;

@@ -1,2 +1,12 @@
+<<<<<<< HEAD
 *.o
 /opus/log
+=======
+.DS_Store
+.idea
+*.log
+tmp/
+
+*.o
+lib/
+>>>>>>> master

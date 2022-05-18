@@ -1,15 +1,18 @@
 module TestUtils
 
-export column_major_to_ptr, ptr_to_column_major
+export column_major_to_row, array_to_column_major
 
-# NOTE M must be a square matrix
-function column_major_to_ptr(M::Matrix{T})::Ptr{T} where {T}
-    pointer(collect(reshape(transpose(M), length(M))))
-end
+# Changes the major order of the array memory layout.
+# Row -> Column and vice-versa
+# This functions works on *any* sized 2-dimensional array
+# and not just square matrices.
+change_major_order(X::AbstractArray, sizes...=size(X)...) =
+    permutedims(reshape(X, sizes...), length(sizes):-1:1)
 
-# NOTE `N` is the side length of what should be an NxN matrix
-function ptr_to_column_major(p::Ptr{T}, N::Int64)::Matrix{T} where {T}
-    collect(transpose(reshape(unsafe_wrap(Array, p, N * N), (N, N))))
-end
+column_major_to_row(M::AbstractArray)::AbstractVector =
+    collect(reshape(change_major_order(M), length(M)))
+
+array_to_column_major(A::AbstractArray, sizes...)::AbstractArray =
+    collect(change_major_order(reshape(A, sizes)))
 
 end # module

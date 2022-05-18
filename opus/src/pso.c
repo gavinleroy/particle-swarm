@@ -22,6 +22,11 @@
 #include "logging.h"
 #endif
 
+#define USE_ROUNDING_BLOOM_FILTER 1
+
+#if USE_ROUNDING_BLOOM_FILTER
+#include "rounding_bloom.h"
+#endif
 
 static double rand_between(double a, double b)
 {
@@ -62,9 +67,140 @@ static double dist(size_t dim, double const * x, double const * y)
     return sqrt(dist2(dim, x, y));
 }
 
+<<<<<<< HEAD
+=======
+
+// PSO_X : pso::pso, t:int, i:int -> x_i(t):double*
+// PSO_FX : pso:pso, t:int, i:int -> f(x_i(t)):double
+#define PSO_X(pso, t, i) ( (pso)->x + ( (t) * (pso)->population_size  + (i) ) * (pso)->dimensions )
+#define PSO_FX(pso, t, i) (pso)->x_eval[ (t) * (pso)->population_size  + (i) ]
+
+// PSO_V : pso::pso, i:int -> v_i:double*
+#define PSO_V(pso, i) ( (pso)->v + (i) * (pso)->dimensions )
+
+// PSO_Y : pso::pso, i:int -> y_i:double*
+// PSO_FY : pso::pso, i:int -> f(y_i):double
+#define PSO_Y(pso, i) ( (pso)->y + (i) * (pso)->dimensions )
+#define PSO_FY(pso, i) (pso)->y_eval[ (t) * (pso)->population_size  + (i) ]
+
+// PSO_PAST_REFINEMENT : pso::pso, k:int -> epsilon_k:double*
+// PSO_PAST_REFINEMENT_EVAL : pso:pso, k:int -> f(epsilon_k):double
+#define PSO_PAST_REFINEMENT(pso, k) ( (pso)->past_refinement_points + (k) * (pso)->dimensions )
+#define PSO_PAST_REFINEMENT_EVAL(pso, k) (pso)->past_refinement_points_eval[k]
+
+
+
+// for other inertia choices, see https://ieeexplore.ieee.org/document/6089659
+struct pso_data_constant_inertia
+{
+    blackbox_fun f;
+    // positions x_i, saved for all times
+    // i.e. PSO_X(pso, t, i) is the position vector x_i(t)
+    double * x;
+    // PSO_FX(pso, t, i) = f(x_i(t))
+    double * x_eval;
+
+    // PSO_V(pso,i) = v_i
+    double * v;
+
+    // PSO_Y(pso,i) := y_i := best position ever recorded for particle i
+    double * y;
+    // PSO_FY(pso,i) := f(y_i)
+    double * y_eval;
+    
+    // ŷ = best position ever recorded over all particles
+    // here a pointer to one of the y_i or in past_refinement_points
+    double * y_hat;
+
+    // Keep track of local refinement points.
+    // max lenght of list = tmax
+    // current length  = n_past_refinement_points
+    double * past_refinement_points;
+    double * past_refinement_points_eval; 
+
+
+    double * bound_low;
+    double * bound_high;
+    double * vmin;
+    double * vmax;
+
+
+    // list of idx of distinct
+    size_t * x_distinct;
+    size_t x_distinct_s;
+    #ifdef USE_ROUNDING_BLOOM_FILTER
+    struct rounding_bloom * bloom;
+    #endif
+
+
+    // parameters of the surrogate
+    double * lambda;
+    double * p;
+
+    double inertia;
+    double social;
+    double cognition;
+
+    double local_refinement_box_size;
+    double min_minimizer_distance;
+
+    double y_hat_eval;
+    
+    int dimensions;
+    int population_size;
+    int n_trials;
+
+    int n_past_refinement_points;
+
+    int time_max;
+    int time;
+};
+
+
+int is_far_from_previous_evaluations(struct pso_data_constant_inertia const * pso, double * x, double min_dist)
+{
+    // - find way to check "if minimizer of surrogate is far from previous points"
+    //    + see https://en.wikipedia.org/wiki/Nearest_neighbor_search
+    //    + in high dim naive search can be best  
+
+    double delta2 = min_dist * min_dist;
+
+    // check previous particle positions
+    for(int t = 0 ; t < pso->time + 1 ; t++)
+    {
+        for(int i = 0 ; i < pso->population_size ; i++)
+        {
+            double d2 = dist2(pso->dimensions, x, PSO_X(pso, t, i));
+            if (d2 < delta2)
+            {
+                return 0;
+            }
+        }
+    }
+
+    // check previous local minimizers positions
+    for(int k = 0 ; k < pso->n_past_refinement_points ; k++)
+    {
+        double d2 = dist2(pso->dimensions, x, PSO_PAST_REFINEMENT(pso, k));
+        if (d2 < delta2)
+        {
+            return 0;
+        } 
+    }
+
+    return 1;
+}
+
+
+void is_x_distinct(int dim, size_t point_cloud_s, double const * point_cloud, double const * x)
+{
+}
+
+>>>>>>> master
 double surrogate_eval(struct pso_data_constant_inertia const * pso, double const * x)
 {
     //TODO: add the past_local_refinements
+    //Note: will also require adding them to the bloom filter / distinctiveness check
     
     //TODO: I think there is something wrong with the surrogate:
     // I don't have the same values when evaluating in the Jupyter notebook
@@ -73,18 +209,13 @@ double surrogate_eval(struct pso_data_constant_inertia const * pso, double const
 
     double res = 0;
     
-    int p = 0;
-    for (int t = 0 ; t < pso->time + 1 ; t++)
+    
+    for (int k = 0 ; k < pso->x_distinct_s ; k++)
     {
-        for (int i = 0 ; i < pso->population_size ; i++)
-        {
-            double * u = pso->x[t][i];
-            double d = dist(pso->dimensions, u, x);
-            res += pso->lambda[p] * d * d * d;
-
-
-            p++;
-        }
+        size_t p = pso->x_distinct[k];
+        double * u = pso->x + p * pso->dimensions;
+        double d = dist(pso->dimensions, u, x);
+        res += pso->lambda[k] * d * d * d;
     }
 
     for (int j = 0 ; j < pso->dimensions ; j++)
@@ -113,10 +244,10 @@ int fit_surrogate(struct pso_data_constant_inertia * pso)
     //TODO: note that the matrix and vector barely change between the
     // iterations. Maybe there could be a way to re-use them?
 
-    // the size of phi is the total number of points where
+    // the size of phi is the total number of _distinct_ points where
     // f has been evaluated
-    // currently : n = population_size * (time + 1)
-    size_t n_phi = pso->population_size * (pso->time + 1); // + pso->n_past_refinement_points
+    // currently : n = x_distinct_s
+    size_t n_phi = pso->x_distinct_s; // + pso->n_past_refinement_points
 
     // the size of P is n x d+1
     size_t n_P = pso->dimensions + 1;
@@ -129,62 +260,50 @@ int fit_surrogate(struct pso_data_constant_inertia * pso)
     // phi_p,q = || u_p - u_q ||
     // currently the {u_p} = {x_i(t=j)} i=0..pop_size, j=0..time+1
 
-    size_t p = 0;
-    for(int t1=0 ; t1 < pso->time+1 ; t1++)
+    for (size_t k1 = 0 ; k1 < pso->x_distinct_s ; k1++)
     {
-        for (int i1 = 0 ; i1 < pso->population_size ; i1++)
+        size_t p = pso->x_distinct[k1];
+        double * u_p = pso->x + p * pso->dimensions;
+
+        for(size_t k2 = 0 ; k2 < pso->x_distinct_s ; k2++)
         {
-            double * u_p = pso->x[t1][i1];
+            size_t q = pso->x_distinct[k2];
+            double * u_q = pso->x + q * pso->dimensions;
 
-            size_t q = 0;
-            for (int t2 = 0 ; t2 < pso->time+1 ; t2++)
-            {
-                for (int i2 = 0 ; i2 < pso->population_size ; i2++)
-                {
-                    double * u_q = pso->x[t2][i2];
-
-                    // Phi is the top left block: phi_ij := A_ij
-                    A[p * n_A + q] = dist(pso->dimensions, u_p, u_q);
-
-                    q++;
-                }
-            }
-            p++;
+            A[k1 * n_A + k2] = dist(pso->dimensions, u_p, u_q);
         }
     }
+
 
 
     // P and tP are blocks in A
     // P_{i,j} := A_{i,n_phi + j} = A[i * n_A + n_phi + j]
     // tP_{i,j} := A_{n_phi + i, j} = A[(n_phi + i) * n_A + j]
 
-    p = 0;
-    for (int t = 0 ; t < pso->time + 1 ; t++)
-    {
-        for (int i = 0 ; i < pso->population_size ; i++)
-        {
-            double * u = pso->x[t][i];
-        
-            // P(p,0) = 1;
-            A[p * n_A + n_phi + 0] = 1;
-            // tP(0,p) = 1;
-            A[(n_phi + 0) * n_A + p] = 1;
 
-            for (int j = 0 ; j < pso->dimensions ; j++)
-            {
-                //P(p,1+j) = u[j];
-                A[p * n_A + n_phi + j + 1] = u[j];
-                //tP(1+j,p) = u[j];
-                A[(n_phi + 1 + j) * n_A + p] = u[j];
-            }
-            p++;
+    for (size_t k = 0 ; k < pso->x_distinct_s ; k++)
+    {
+        size_t p = pso->x_distinct[k];
+        double * u = pso->x + p * pso->dimensions;
+        
+        // P(p,0) = 1;
+        A[k * n_A + n_phi + 0] = 1;
+        // tP(0,p) = 1;
+        A[(n_phi + 0) * n_A + k] = 1;
+
+        for (int j = 0 ; j < pso->dimensions ; j++)
+        {
+            //P(p,1+j) = u[j];
+            A[k * n_A + n_phi + j + 1] = u[j];
+            //tP(1+j,p) = u[j];
+            A[(n_phi + 1 + j) * n_A + k] = u[j];
         }
     }
 
     // lower right block is zeros
-    for(int i = n_phi ; i < n_A ; i++)
+    for(size_t i = n_phi ; i < n_A ; i++)
     {
-        for (int j = n_phi ; j < n_A ; j++)
+        for (size_t j = n_phi ; j < n_A ; j++)
         {
             A[i * n_A + j] = 0;
         }
@@ -194,15 +313,13 @@ int fit_surrogate(struct pso_data_constant_inertia * pso)
     // right hand side
     double * b = malloc(n_A * sizeof(double));
 
-    p = 0;
-    for (int t = 0 ; t < pso->time + 1 ; t++)
+    for (size_t k = 0 ; k < pso->x_distinct_s ; k++)
     {
-        for (int i = 0 ; i < pso->population_size ; i ++)
-        {
-            b[p] = pso->x_eval[t][i];
-        }
+        size_t p = pso->x_distinct[k];
+        b[k] = pso->x_eval[p];
     }
-    for (int i = n_phi ; i < n_A ; i++)
+
+    for (size_t i = n_phi ; i < n_A ; i++)
     {
         b[i] = 0;
     }
@@ -230,13 +347,13 @@ int fit_surrogate(struct pso_data_constant_inertia * pso)
     #endif
 
     pso->lambda = realloc(pso->lambda, n_phi * sizeof(double));
-    for (int i = 0 ; i < n_phi ; i++)
+    for (size_t i = 0 ; i < n_phi ; i++)
     {
         pso->lambda[i] = x[i];
     }
 
 
-    for(int i = 0 ; i < n_P ; i++)
+    for(size_t i = 0 ; i < n_P ; i++)
     {
         pso->p[i] = x[n_phi + i];
     }
@@ -282,44 +399,17 @@ void pso_constant_inertia_init(
     pso->time = 0;
 
 
-    pso->x = (double***)malloc(pso->time_max * sizeof(double **));
-    for (int t = 0 ; t < pso->time_max ; t++)
-    {
-        pso->x[t] = (double**)malloc(pso->population_size * sizeof(double*));
-        for (int i = 0 ; i < pso->population_size ; i++)
-        {
-            pso->x[t][i] = (double*)malloc(pso->dimensions * sizeof(double));
-        }
-    }
+    pso->x = malloc(pso->time_max * pso->population_size * pso->dimensions * sizeof(double));
 
+    pso->x_eval = malloc(pso->time_max * pso->population_size *  sizeof(double));
 
-    pso->x_eval = (double**)malloc(pso->time_max * sizeof(double *));
-    for (int t = 0 ; t < pso->time_max ; t++)
-    {
-        pso->x_eval[t] = (double*)malloc(pso->population_size * sizeof(double));
-    }
+    pso->v = malloc(pso->population_size * pso->dimensions * sizeof(double));
 
-    pso->v = (double**)malloc(pso->population_size * sizeof(double *));
-    for (int i = 0 ; i < pso->population_size ; i++)
-    {
-        pso->v[i] = (double*)malloc(pso->dimensions * sizeof(double));
-    }
+    pso->y = malloc(pso->population_size * pso->dimensions * sizeof(double));
 
-    pso->y = (double**)malloc(pso->population_size * sizeof(double *));
-    for (int i = 0 ; i < pso->population_size ; i++)
-    {
-        pso->y[i] = (double*)malloc(pso->dimensions * sizeof(double));
-    }
+    pso->y_eval= malloc(pso->population_size * sizeof(double *));
 
-    pso->y_eval= (double*)malloc(pso->population_size * sizeof(double *));
-
-    pso->past_refinement_points = malloc(pso->time_max * sizeof(double*));
-    // alloc-ed in the loop
-    //for (int i = 0 ; i < pso->time_max ; i++)
-    //{
-    //    pso->past_refinement_points[i] = malloc(pso->dimensions * sizeof(double));
-    //}
-
+    pso->past_refinement_points = malloc(pso->time_max * pso->dimensions * sizeof(double));
     pso->past_refinement_points_eval = malloc(pso->population_size * sizeof(double));
 
 
@@ -336,6 +426,19 @@ void pso_constant_inertia_init(
     }
 
 
+    pso->x_distinct = malloc(pso->time_max * pso->population_size * sizeof(size_t));
+    pso->x_distinct_s = 0;
+
+    #if USE_ROUNDING_BLOOM_FILTER
+    pso->bloom = malloc(sizeof(struct rounding_bloom));
+    int bloom_entries = pso->time_max * pso->population_size;
+    if (bloom_entries < 1000) bloom_entries = 1000;
+    double bloom_false_pos_rate = 0.001;
+    double bloom_rounding_eps = 0.1;
+    rounding_bloom_init(pso->bloom, bloom_entries, bloom_false_pos_rate, bloom_rounding_eps, dimensions, bounds_low);
+    #else
+    // No data structure needed for naive search
+    #endif
 
     // will realloc in fit_surrogate
     pso->lambda = NULL;
@@ -345,10 +448,26 @@ void pso_constant_inertia_init(
     // setup x
     for (int i = 0 ; i < population_size ; i ++)
     {
+        // add it to the point cloud
         for (int j = 0 ; j < pso->dimensions ; j++)
         {
-            pso->x[0][i][j] = initial_positions[i][j];
+            PSO_X(pso, 0, i)[j] = initial_positions[i][j];
         }
+
+        // Check if x is distinct
+        #if USE_ROUNDING_BLOOM_FILTER
+        // add and check proximity to previous points
+        if (! rounding_bloom_check_add(pso->bloom, dimensions, PSO_X(pso, 0, i), 1))
+        {
+            pso->x_distinct[pso->x_distinct_s] = i;
+            pso->x_distinct_s++;
+        }
+        #else
+        // naive implementation with distance computation
+        assert(false);
+        #endif
+
+
     }
 
     // setup bounds in space
@@ -363,44 +482,13 @@ void pso_constant_inertia_init(
         pso->vmax[k] = vmax[k];
 }
 
-int is_far_from_previous_evaluations(struct pso_data_constant_inertia const * pso, double * x)
-{
-    // - find way to check "if minimizer of surrogate is far from previous points"
-    //    + see https://en.wikipedia.org/wiki/Nearest_neighbor_search
-    //    + in high dim naive search can be best  
-
-    double delta2 = pso->min_minimizer_distance * pso->min_minimizer_distance;
-
-    // check previous particle positions
-    for(int t = 0 ; t < pso->time + 1 ; t++)
-    {
-        for(int i = 0 ; i < pso->population_size ; i++)
-        {
-            double d2 = dist2(pso->dimensions, x, pso->x[t][i]);
-            if (d2 < delta2)
-            {
-                return 0;
-            }
-        }
-    }
-
-    // check previous local minimizers positions
-    for(int k = 0 ; k < pso->n_past_refinement_points ; k++)
-    {
-        double d2 = dist2(pso->dimensions, x, pso->past_refinement_points[k]);
-        if (d2 < delta2)
-        {
-            return 0;
-        } 
-    }
-
-    return 1;
-}
 
 
 void pso_constant_inertia_first_steps(struct pso_data_constant_inertia * pso)
 {
     //TODO: step 1 and 2 "space-filling design"
+
+    // 
 
     // Step 3. Initialize particle velocities
     for(int i = 0 ; i < pso->population_size ; i++)
@@ -408,7 +496,7 @@ void pso_constant_inertia_first_steps(struct pso_data_constant_inertia * pso)
         for (int k=0 ; k < pso->dimensions ; k++)
         {
             double uk = rand_between(pso->bound_low[k], pso->bound_high[k]);
-            pso->v[i][k] = 1. / 2 * (uk - pso->x[0][i][k]);
+            PSO_V(pso, i)[k] = 1. / 2 * (uk - PSO_X(pso, 0, i)[k]);
         }
     }
 
@@ -417,12 +505,16 @@ void pso_constant_inertia_first_steps(struct pso_data_constant_inertia * pso)
     {
         for (int k = 0 ; k < pso->dimensions ;  k++)
         {
-            pso->y[i][k] = pso->x[0][i][k];
+            PSO_Y(pso, i)[k] = PSO_X(pso, 0, i)[k];
         }
 
+<<<<<<< HEAD
         double x_eval = pso->f(pso->x[0][i], pso->dimensions);
+=======
+        double x_eval = pso->f(PSO_X(pso, 0, i));
+>>>>>>> master
         pso->y_eval[i] = x_eval;
-        pso->x_eval[0][i] = x_eval;
+        PSO_FX(pso, 0, i) = x_eval;
 
     }
     #ifdef DEBUG_STDOUT
@@ -430,13 +522,13 @@ void pso_constant_inertia_first_steps(struct pso_data_constant_inertia * pso)
     #endif
     // find ŷ
     
-    double * y_hat = pso->y[0];
+    double * y_hat = PSO_Y(pso, 0);
     double y_hat_eval = pso->y_eval[0];
     for (int i = 1 ; i < pso->population_size ; i++)
     {
         if (pso->y_eval[i] < y_hat_eval)
         {
-            y_hat = pso->y[i];
+            y_hat = PSO_Y(pso, i);
             y_hat_eval = pso->y_eval[i];
         }
     }
@@ -493,14 +585,14 @@ bool pso_constant_inertia_loop(struct pso_data_constant_inertia * pso)
                 double w1 = (double)rand() / RAND_MAX;
                 double w2 = (double)rand() / RAND_MAX;
                 double v =
-                    pso->inertia * pso->v[i][j] +
-                    pso->cognition * w1 * (pso->y[i][j] - pso->x[t][i][j]) +
-                    pso->social * w2 * (pso->y_hat[j] - pso->x[t][i][j]);
+                    pso->inertia * PSO_V(pso, i)[j] +
+                    pso->cognition * w1 * (PSO_Y(pso, i)[j] - PSO_X(pso, t, i)[j]) +
+                    pso->social * w2 * (pso->y_hat[j] - PSO_X(pso, t, i)[j]);
 
                 v_trial[j] = clamp(v, pso->vmin[j], pso->vmax[j]);
 
 
-                x_trial[j] = clamp(pso->x[pso->time][i][j] + v_trial[j], pso->bound_low[j], pso->bound_high[j]);
+                x_trial[j] = clamp(PSO_X(pso, pso->time, i)[j] + v_trial[j], pso->bound_low[j], pso->bound_high[j]);
             }
 
             double x_trial_seval = surrogate_eval(pso, x_trial);
@@ -542,15 +634,15 @@ bool pso_constant_inertia_loop(struct pso_data_constant_inertia * pso)
 
         for (int j = 0 ; j < pso->dimensions ; j++)
         {
-            pso->x[t+1][i][j] = x_trial_best[j];
-            pso->v[i][j] = v_trial_best[j];
+            PSO_X(pso, t+1, i)[j] = x_trial_best[j];
+            PSO_V(pso, i)[j] = v_trial_best[j];
         }
 
         #if DEBUG_TRIALS
         printf("set x[t+1][i]:\n");
         char new_x_name[16] = {0};
         snprintf(new_x_name, sizeof(new_x_name), "x%d_(t=%d)", i, t+1);
-        print_vectord(pso->x[t+1][i], pso->dimensions, new_x_name);
+        print_vectord(PSO_X(pso, t+1, i), pso->dimensions, new_x_name);
         #endif
 
     }
@@ -566,25 +658,32 @@ bool pso_constant_inertia_loop(struct pso_data_constant_inertia * pso)
     // Evaluate swarm positions
     for (int i = 0 ; i < pso->population_size ; i++)
     {
+<<<<<<< HEAD
         pso->x_eval[t+1][i] = pso->f(pso->x[t+1][i], pso->dimensions);
+=======
+        PSO_FX(pso, t+1, i) = pso->f(PSO_X(pso, t+1, i));
+>>>>>>> master
     }
 
     // Step 8. Update the best positions per particle and overall
 
     for (int i = 0 ; i < pso->population_size ; i++)
     {
-        double x_eval = pso->x_eval[t+1][i];
+        double x_eval = PSO_FX(pso, t+1, i);
 
         if (x_eval < pso->y_eval[i])
         {
             // y_i <- x_i
-            pso->y[i] = pso->x[t+1][i];
+            for (int k = 0 ; k < pso->dimensions ; k++)
+            {
+                PSO_Y(pso, i)[k] = PSO_X(pso, t+1, i)[k];
+            }
             pso->y_eval[i] = x_eval;
 
             // is x_i(t+1) better than ŷ(t) ?
             if (x_eval < pso->y_hat_eval)
             {
-                pso->y_hat = pso->y[i];
+                pso->y_hat = PSO_Y(pso, i);
             }
         }
     }
@@ -593,6 +692,24 @@ bool pso_constant_inertia_loop(struct pso_data_constant_inertia * pso)
 
     // Step 9
     // Refit surrogate with time = t+1
+
+    // first update the set of distinct points
+    #if USE_ROUNDING_BLOOM_FILTER
+    for(int i = 0 ; i < pso->population_size ; i++)
+    {
+        // add and check proximity to previous points
+        if (! rounding_bloom_check_add(pso->bloom, pso->dimensions, PSO_X(pso, t+1, i), 1))
+        {
+            pso->x_distinct[pso->x_distinct_s] = (t+1) * pso->population_size + i;
+            pso->x_distinct_s++;
+        }
+    }
+    #else
+    // naive implementation with distance computation
+    assert(false);
+    #endif
+
+
     if (fit_surrogate(pso) < 0)
     {
         fprintf(stderr, "ERROR: Failed to fit surrogate\n");
@@ -624,25 +741,35 @@ bool pso_constant_inertia_loop(struct pso_data_constant_inertia * pso)
     
     // Step 11
     // Determine if minimizer of surrogate is far from previous points
-    if(is_far_from_previous_evaluations(pso, x_local))
+    if(is_far_from_previous_evaluations(pso, x_local, pso->min_minimizer_distance))
     {
+<<<<<<< HEAD
         double x_local_eval = pso->f(x_local, pso->dimensions);
+=======
+        // Add new refinement point to list of past refinement points epsilon
 
-        pso->past_refinement_points[pso->n_past_refinement_points] = x_local;
-        pso->past_refinement_points_eval[pso->n_past_refinement_points] = x_local_eval;
-        pso->n_past_refinement_points++;
+        double x_local_eval = pso->f(x_local);
+>>>>>>> master
+
+        for (int k = 0 ; k < pso->dimensions ; k++)
+        {
+            PSO_PAST_REFINEMENT(pso, pso->n_past_refinement_points)[k] = x_local[k];
+        }
+        PSO_PAST_REFINEMENT_EVAL(pso, pso->n_past_refinement_points) = x_local_eval;
 
         // update overall best if applicable
         if(x_local_eval < pso->y_hat_eval)
         {
-            pso->y_hat = x_local;
+            pso->y_hat = PSO_PAST_REFINEMENT(pso, pso->n_past_refinement_points);
             pso->y_hat_eval = x_local_eval;
         }
+
+        pso->n_past_refinement_points++;
     }
-    else
-    {
-        free(x_local);
-    }
+
+    free(x_local);
+
+
 
 
     return (pso->time < pso->time_max - 1);
