@@ -25,9 +25,52 @@ int main(int argc, char **argv)
     }
 
 #ifdef PROFILING
-    printf("Started profiling\n");
-    double cycles = perf_counter(run_pso_f);
-    printf("Number of cycles required for run_pso: %lf\n", cycles);
+    double cycles;
+
+    profiling_hyperparameters* hyperparams = malloc(sizeof(profiling_hyperparameters));
+
+    // the following should be fixed accross 'dimensions' comparisons 
+    // hyperparams->population_size = 4;
+    hyperparams->time_max = 10;
+    hyperparams->n_trials = 4;
+
+    // printf("Started profiling run_pso\n");
+    // for(int d=1; d<=30; ++d) {
+    //     hyperparams->dimensions = d;
+    //     hyperparams->population_size = d+1;
+    //     cycles = perf_counter(run_pso_f, hyperparams);
+    //     printf("%d, %lf\n", hyperparams->dimensions, cycles);
+    // }
+
+    // printf("\n\n\n\n");
+    
+    // printf("Started profiling plu_factorization\n");
+    // for(int N=10; N<=10000; N*=2) {
+    //     hyperparams->plu_matrix_side_length = N;
+    //     cycles = perf_counter(plu_factorization_f, hyperparams);
+    //     printf("%d, %lf\n", hyperparams->plu_matrix_side_length, cycles);
+    // }
+
+    // printf("Started profiling plu_solve\n");
+    // for(int N=10; N<=10000; N*=2) {
+    //     hyperparams->plu_matrix_side_length = N;
+    //     cycles = perf_counter(plu_solve_f, hyperparams);
+    //     printf("%d, %lf\n", hyperparams->plu_matrix_side_length, cycles);
+    // }
+
+    // printf("\n\n\n\n");
+
+    printf("Started profiling fit_surrogate\n");
+    for(int d=1; d<=30; ++d) {
+        hyperparams->dimensions = d;
+        hyperparams->population_size = d+1;
+        cycles = perf_counter(fit_surrogate_f, hyperparams);
+        printf("%d, %lf\n", hyperparams->dimensions, cycles);
+    }
+
+    // printf("Started profiling fit_surrogate\n");
+    // cycles = perf_counter(fit_surrogate_f, hyperparams);
+    // printf("Number of cycles required for fit_surrogate: %lf\n", cycles);
 #else 
 
     srand(clock());
