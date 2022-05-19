@@ -251,23 +251,14 @@ void generate_fit_surrogate_parameters(struct pso_data_constant_inertia* params,
 
     params->f = &f1;
 
-    params->x = (double***)malloc(params->time_max * sizeof(double **));
-    for (int t = 0 ; t < params->time_max ; t++)
-    {
-        params->x[t] = (double**)malloc(params->population_size * sizeof(double*));
-        for (int i = 0 ; i < params->population_size ; i++)
-        {
-            params->x[t][i] = (double*)malloc(params->dimensions * sizeof(double));
-            generate_random_vector(params->dimensions, params->x[t][i]);
-        }
-    }
+    params->x = malloc(params->time_max * params->population_size * params->dimensions * sizeof(double));
+    generate_random_vector(params->time_max * params->population_size * params->dimensions, params->x);
 
-    params->x_eval = (double**)malloc(params->time_max * sizeof(double *));
+    params->x_eval = malloc(params->time_max * params->population_size *  sizeof(double));
     for (int t = 0 ; t < params->time_max ; t++)
     {
-        params->x_eval[t] = (double*)malloc(params->population_size * sizeof(double));
         for(int i =0 ; i < params->population_size ; i++) {
-            params->x_eval[t][i] = params->f(params->x[t][i], params->dimensions);
+            PSO_FX(params, t, i) = params->f(PSO_X(params, t, i), params->dimensions);
         }
     }
 

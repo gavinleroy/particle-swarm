@@ -1,7 +1,5 @@
 #pragma once
 
-
-
 /*
  * This file defines a Bloom filter that can be used to test the proximity of 
  * points in our problem space.

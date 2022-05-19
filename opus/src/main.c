@@ -34,6 +34,11 @@ int main(int argc, char **argv)
     hyperparams->time_max = 10;
     hyperparams->n_trials = 4;
 
+    hyperparams->dimensions = 2;
+    hyperparams->population_size = 4;
+    cycles = perf_counter(run_pso_f, hyperparams);
+    printf("%d, %lf\n", hyperparams->dimensions, cycles);
+
     // printf("Started profiling run_pso\n");
     // for(int d=1; d<=30; ++d) {
     //     hyperparams->dimensions = d;
@@ -51,7 +56,6 @@ int main(int argc, char **argv)
     //     printf("%d, %lf\n", hyperparams->plu_matrix_side_length, cycles);
     // }
 
-<<<<<<< HEAD
     // printf("Started profiling plu_solve\n");
     // for(int N=10; N<=10000; N*=2) {
     //     hyperparams->plu_matrix_side_length = N;
@@ -61,13 +65,13 @@ int main(int argc, char **argv)
 
     // printf("\n\n\n\n");
 
-    printf("Started profiling fit_surrogate\n");
-    for(int d=1; d<=30; ++d) {
-        hyperparams->dimensions = d;
-        hyperparams->population_size = d+1;
-        cycles = perf_counter(fit_surrogate_f, hyperparams);
-        printf("%d, %lf\n", hyperparams->dimensions, cycles);
-    }
+    // printf("Started profiling fit_surrogate\n");
+    // for(int d=1; d<=30; ++d) {
+    //     hyperparams->dimensions = d;
+    //     hyperparams->population_size = d+1;
+    //     cycles = perf_counter(fit_surrogate_f, hyperparams);
+    //     printf("%d, %lf\n", hyperparams->dimensions, cycles);
+    // }
 
     // printf("Started profiling fit_surrogate\n");
     // cycles = perf_counter(fit_surrogate_f, hyperparams);
@@ -76,8 +80,6 @@ int main(int argc, char **argv)
 
     srand(clock());
 
-=======
->>>>>>> master
     double inertia = 0.7;
     double social = 1., cognition = 1.;
     double local_refinement_box_size = 3.;
