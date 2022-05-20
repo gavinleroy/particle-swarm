@@ -80,7 +80,7 @@ void generate_run_pso_parameters(run_pso_parameters *params,
   // these terms) blackbox_fun functions[3] = {&f1, &f2, &f3}; size_t
   // function_index = randint_between(0, 2); params->f =
   // functions[function_index];
-  params->f = &f1;
+  params->f = &f3;
 
   double inertia_space[5];
   fill_linspace(inertia_space, 5, 0.5, 1.0);
