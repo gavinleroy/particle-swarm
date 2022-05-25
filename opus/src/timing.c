@@ -36,16 +36,6 @@ double perf_counter(enum profiled_function_t profiled_function, profiling_hyperp
         generate_run_pso_parameters((run_pso_parameters*) params, hyperparams);
         break;
 
-    case plu_factorization_f:
-        params = malloc(sizeof(plu_factorize_parameters));
-        generate_plu_factorize_parameters((plu_factorize_parameters*) params, hyperparams);
-        break;
-
-    case plu_solve_f:
-        params = malloc(sizeof(plu_solve_parameters));
-        generate_plu_solve_parameters((plu_solve_parameters*) params, hyperparams);
-        break;
-
     case fit_surrogate_f:
         params = malloc(sizeof(struct pso_data_constant_inertia));
         generate_fit_surrogate_parameters((struct pso_data_constant_inertia*) params, hyperparams);
@@ -72,14 +62,6 @@ double perf_counter(enum profiled_function_t profiled_function, profiling_hyperp
             {
             case run_pso_f:
                 run_pso_wrapper((run_pso_parameters*) params);
-                break;
-
-            case plu_factorization_f:
-                plu_factorize_wrapper((plu_factorize_parameters*) params);
-                break;
-
-            case plu_solve_f:
-                plu_solve_wrapper((plu_solve_parameters*) params);
                 break;
 
             case fit_surrogate_f:
@@ -114,14 +96,6 @@ double perf_counter(enum profiled_function_t profiled_function, profiling_hyperp
             {
             case run_pso_f:
                 run_pso_wrapper((run_pso_parameters*) params);
-                break;
-
-            case plu_factorization_f:
-                plu_factorize_wrapper((plu_factorize_parameters*) params);
-                break;
-
-            case plu_solve_f:
-                plu_solve_wrapper((plu_solve_parameters*) params);
                 break;
 
             case fit_surrogate_f:

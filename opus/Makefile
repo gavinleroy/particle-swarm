@@ -2,6 +2,10 @@
 # Makefile options
 ######
 
+######
+# Makefile options
+######
+
 # Exemple: build a library in debug mode
 #	$ make PSO_SHARED=1 DEBUG=1
 
@@ -26,7 +30,7 @@ DEBUG_FLAGS:= \
 
 
 # Release flags: optimisations, NDEBUG (disable assertions), disable hardening, disable PIE (only for executable)
-RELEASE_FLAGS:=-DNDEBUG -O2 -flto -march=native -fcf-protection=none -fno-stack-clash-protection -fno-stack-protector
+RELEASE_FLAGS:=-DNDEBUG -O2 -flto -march=native -fcf-protection=none -fno-stack-protector
 
 # Flags common to debug and release
 # Currently starts empty
@@ -48,15 +52,20 @@ LDLIBS+=-lm
 # (indifferently C or C++, `make` will use the correct rule based on the
 # source file extension)
 OBJ_COMMON := src/helpers.o src/local_refinement.o src/logging.o \
-                 src/plu_factorization.o src/pso.o src/bloom.o src/murmurhash.o \
+                 src/lu_solve.o src/pso.o src/bloom.o src/murmurhash.o \
 		 src/rounding_bloom.o src/gaussian_elimination_solver.o \
+		 src/steps/step3.o src/steps/step4.o src/steps/step5.o \
+		 src/steps/step6.o src/steps/step7.o src/steps/step8.o \
+		 src/steps/step9.o src/steps/step10.o src/steps/step11.o \
+		 src/steps/surrogate_eval.o src/steps/fit_surrogate.o \
 		 src/timing.o src/timing_params.o
 
 # Object files required for the the library
-OBJ_LIB := src/perf_ge_solve.o src/pso_ffi.o
+OBJ_LIB := src/perf_testers/perf_ge_solve.o src/perf_testers/perf_lu_solve.o src/perf_testers/perf_fit_surrogate.o src/pso_ffi.o
 # Object files required for the the executable
 OBJ_EXE := src/main.o
-
+# If Clang is your CXX then specifying the standard is required
+CXXFLAGS = -std=c++0x
 
 ######
 # Library vs executable compilation options
@@ -72,7 +81,7 @@ ifeq ($(PSO_SHARED), 1)
 	# For the shared file we also need to pass
 	# a preprocessor definition
 	# TEST_PERF=1
-	CPPFLAGS += -DTEST_PERF
+	COMMON_FLAGS += -DTEST_PERF
 
 	ifeq ($(UNAME_S),Darwin)
 	target := libpso.dylib
@@ -88,16 +97,15 @@ ifeq ($(PSO_SHARED), 1)
 
 else # PSO_SHARED
 	# Option 2. Build an executable
-	
+
 	# Disable PIE
 	COMMON_FLAGS+=-fno-PIE
 	LDFLAGS+=-no-pie
-	
+
 	# Optionnal sanitizers.
 	# Only enable int the executable as loading sanitized libraries
 	# from a non-sanitized executable results in an error
 	DEBUG_FLAGS+=-fsanitize=undefined -fsanitize=address
-	
 	target := pso
 	OBJFILES := $(OBJ_COMMON) $(OBJ_EXE)
 

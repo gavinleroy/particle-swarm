@@ -1,7 +1,6 @@
 #pragma once
 #include "pso.h"
 
-#include "plu_factorization.h"
 
 // === hyperparameters ===
 
@@ -37,29 +36,29 @@ void generate_run_pso_parameters(run_pso_parameters* params, profiling_hyperpara
 
 void run_pso_wrapper(run_pso_parameters* params);
 
-// === plu_factorization ===
+// // === plu_factorization ===
 
-typedef struct {
-    int N;
-    double* A;
-    plu_factorization* plu_ft;
-} plu_factorize_parameters;
+// typedef struct {
+//     int N;
+//     double* A;
+//     plu_factorization* plu_ft;
+// } plu_factorize_parameters;
 
-void generate_plu_factorize_parameters(plu_factorize_parameters* params, profiling_hyperparameters* hyperparams);
+// void generate_plu_factorize_parameters(plu_factorize_parameters* params, profiling_hyperparameters* hyperparams);
 
-void plu_factorize_wrapper(plu_factorize_parameters* params);
+// void plu_factorize_wrapper(plu_factorize_parameters* params);
 
-// === plu_solve ===
+// // === plu_solve ===
 
-typedef struct {
-    plu_factorize_parameters* plu_fact_params;
-    double* b;
-    double* x;
-} plu_solve_parameters;
+// typedef struct {
+//     plu_factorize_parameters* plu_fact_params;
+//     double* b;
+//     double* x;
+// } plu_solve_parameters;
 
-void generate_plu_solve_parameters(plu_solve_parameters* params, profiling_hyperparameters* hyperparams);
+// void generate_plu_solve_parameters(plu_solve_parameters* params, profiling_hyperparameters* hyperparams);
 
-void plu_solve_wrapper(plu_solve_parameters* params);
+// void plu_solve_wrapper(plu_solve_parameters* params);
 
 // === fit_surrogate === 
 

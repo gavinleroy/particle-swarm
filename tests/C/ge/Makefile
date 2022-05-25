@@ -9,6 +9,7 @@ CFLAGS+=-O0 -ggdb3 \
 # Release flags
 #CFLAGS += -O2 -flto -march=native
 
+CPPFLAGS+=-DTEST_PERF
 
 LDLIBS+=-lpso -L../../../opus
 

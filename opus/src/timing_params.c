@@ -213,23 +213,23 @@ void generate_random_invertible_matrix(int N, double *A)
   }
 }
 
-void generate_plu_factorize_parameters(plu_factorize_parameters *params,
-                                       profiling_hyperparameters *hyperparams)
-{
-  // fixed parameters (flops count is expressed as a function of these terms)
-  params->N = hyperparams->plu_matrix_side_length;
+// void generate_plu_factorize_parameters(plu_factorize_parameters *params,
+//                                        profiling_hyperparameters *hyperparams)
+// {
+//   // fixed parameters (flops count is expressed as a function of these terms)
+//   params->N = hyperparams->plu_matrix_side_length;
 
-  // randomized parameters
-  params->plu_ft = malloc(sizeof(plu_factorization));
-  alloc_plu_factorization(params->N, params->plu_ft);
-  params->A = malloc(params->N * params->N * sizeof(double));
-  generate_random_invertible_matrix(params->N, params->A);
-}
+//   // randomized parameters
+//   params->plu_ft = malloc(sizeof(plu_factorization));
+//   alloc_plu_factorization(params->N, params->plu_ft);
+//   params->A = malloc(params->N * params->N * sizeof(double));
+//   generate_random_invertible_matrix(params->N, params->A);
+// }
 
-void plu_factorize_wrapper(plu_factorize_parameters *params)
-{
-  plu_factorize(params->N, params->A, params->plu_ft);
-}
+// void plu_factorize_wrapper(plu_factorize_parameters *params)
+// {
+//   plu_factorize(params->N, params->A, params->plu_ft);
+// }
 
 // === plu_solve ===
 
@@ -241,25 +241,25 @@ void generate_random_vector(int N, double *b)
   }
 }
 
-void generate_plu_solve_parameters(plu_solve_parameters *params,
-                                   profiling_hyperparameters *hyperparams)
-{
-  params->plu_fact_params = malloc(sizeof(plu_factorize_parameters));
-  generate_plu_factorize_parameters(params->plu_fact_params, hyperparams);
+// void generate_plu_solve_parameters(plu_solve_parameters *params,
+//                                    profiling_hyperparameters *hyperparams)
+// {
+//   params->plu_fact_params = malloc(sizeof(plu_factorize_parameters));
+//   generate_plu_factorize_parameters(params->plu_fact_params, hyperparams);
 
-  // generate plu result
-  plu_factorize_wrapper(params->plu_fact_params);
+//   // generate plu result
+//   plu_factorize_wrapper(params->plu_fact_params);
 
-  params->b = malloc(params->plu_fact_params->N * sizeof(double));
-  generate_random_vector(params->plu_fact_params->N, params->b);
-  params->x = malloc(params->plu_fact_params->N * sizeof(double));
-}
+//   params->b = malloc(params->plu_fact_params->N * sizeof(double));
+//   generate_random_vector(params->plu_fact_params->N, params->b);
+//   params->x = malloc(params->plu_fact_params->N * sizeof(double));
+// }
 
-void plu_solve_wrapper(plu_solve_parameters *params)
-{
-  plu_solve(params->plu_fact_params->N, params->plu_fact_params->plu_ft,
-            params->b, params->x);
-}
+// void plu_solve_wrapper(plu_solve_parameters *params)
+// {
+//   plu_solve(params->plu_fact_params->N, params->plu_fact_params->plu_ft,
+//             params->b, params->x);
+// }
 
 // === fit_surrogate ===
 
@@ -300,9 +300,6 @@ void generate_fit_surrogate_parameters(struct pso_data_constant_inertia *params,
       PSO_FX(params, t, i) = params->f(PSO_X(params, t, i), params->dimensions);
     }
   }
-
-  params->lambda = NULL;
-  params->p = malloc((params->dimensions + 1) * sizeof(double));
 }
 
 void fit_surrogate_wrapper(struct pso_data_constant_inertia *params)
