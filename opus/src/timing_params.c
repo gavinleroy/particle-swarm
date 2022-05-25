@@ -214,7 +214,8 @@ void generate_random_invertible_matrix(int N, double *A)
 }
 
 // void generate_plu_factorize_parameters(plu_factorize_parameters *params,
-//                                        profiling_hyperparameters *hyperparams)
+//                                        profiling_hyperparameters
+//                                        *hyperparams)
 // {
 //   // fixed parameters (flops count is expressed as a function of these terms)
 //   params->N = hyperparams->plu_matrix_side_length;

@@ -215,4 +215,3 @@ void run_pso(blackbox_fun f, double inertia, double social, double cognition,
     printf("]  f(ŷ)=%f\n", pso.y_hat_eval);
   }
 }
-
