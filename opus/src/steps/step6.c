@@ -310,14 +310,6 @@ void step6_opt3(struct pso_data_constant_inertia *pso)
       {
         // compute v_i(t+1) from v_i(t)
         int j2 = j * 2;
-        double w0_1 = row_ptr[j2];     // (double)rand() / RAND_MAX;
-        double w0_2 = row_ptr[j2 + 1]; // (double)rand() / RAND_MAX;
-        double w1_1 = row_ptr[j2 + 2];
-        double w1_2 = row_ptr[j2 + 3];
-        double w2_1 = row_ptr[j2 + 4];
-        double w2_2 = row_ptr[j2 + 5];
-        double w3_1 = row_ptr[j2 + 6];
-        double w3_2 = row_ptr[j2 + 7];
 
         __m256d inertia, v, t0;
         __m256d cognition, w1, pso_y, pso_x, t10, t11;
@@ -376,7 +368,7 @@ void step6_opt3(struct pso_data_constant_inertia *pso)
         pso_x = _mm256_min_pd(pso_bound_high, pso_x); // upper bound
 
         _mm256_store_pd(pso->v_trial + j, v); // pso->v_trial[j] = clamp(...)
-        _mm256_store_pd(pso->x_trial + j, pso_x);
+        _mm256_storeu_pd(pso->x_trial + j, pso_x);
       }
 
       for (; j < dim; j++)
@@ -416,12 +408,6 @@ void step6_opt3(struct pso_data_constant_inertia *pso)
     }
 
     // set next position and update velocity
-
-    //    for (int j = 0; j < pso->dimensions; j++)
-    //    {
-    //      PSO_X(pso, i)[j] = pso->x_trial_best[j];
-    //      PSO_V(pso, i)[j] = pso->v_trial_best[j];
-    //    }
     memcpy(PSO_X(pso, i), pso->x_trial_best, pso->dimensions * sizeof(double));
     memcpy(PSO_V(pso, i), pso->v_trial_best, pso->dimensions * sizeof(double));
   }
@@ -429,8 +415,8 @@ void step6_opt3(struct pso_data_constant_inertia *pso)
 
 void step6_optimized(struct pso_data_constant_inertia *pso)
 {
-  //  step6_base(pso);
+//    step6_base(pso);
   //  step6_opt1(pso);
-  //  step6_opt2(pso);
+//    step6_opt2(pso);
   step6_opt3(pso);
 }

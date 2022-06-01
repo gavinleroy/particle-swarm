@@ -93,8 +93,8 @@ void pso_constant_inertia_init(
   // yhat will be a pointer in another array
   pso->y_hat = NULL;
 
-  pso->v_trial = malloc(pso->dimensions * sizeof(double));
-  pso->x_trial = malloc(pso->dimensions * sizeof(double));
+  pso->v_trial = aligned_alloc(32,pso->dimensions * sizeof(double));
+  pso->x_trial = aligned_alloc(32,pso->dimensions * sizeof(double));
 
   pso->v_trial_best = malloc(pso->dimensions * sizeof(double));
   pso->x_trial_best = malloc(pso->dimensions * sizeof(double));
@@ -106,8 +106,8 @@ void pso_constant_inertia_init(
   pso->bound_high =
       (double *)aligned_alloc(32, pso->dimensions * sizeof(double));
 
-  pso->vmin = (double *)malloc(pso->dimensions * sizeof(double));
-  pso->vmax = (double *)malloc(pso->dimensions * sizeof(double));
+  pso->vmin = (double *)aligned_alloc(32, pso->dimensions * sizeof(double));
+  pso->vmax = (double *)aligned_alloc(32, pso->dimensions * sizeof(double));
 
   for (int j = 0; j < dimensions; j++)
   {
